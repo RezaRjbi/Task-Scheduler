@@ -16,9 +16,12 @@ class Task(models.Model):
     completed_date = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
+        # prevent new instance to have deadline less than the time that task was originally crated
         if self.deadline:
             if self.deadline < self.created_date:
                 raise ValidationError("deadline must be greater than created date")
+
+        # prevent instances to have same IDs
         generated_task_id = generate_random_number(8)
 
         while Task.objects.filter(task_id=generated_task_id).exists():
