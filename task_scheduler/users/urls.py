@@ -1,5 +1,11 @@
 from django.urls import path
-from .views import UserApiView
+from . import views
+from rest_framework.urlpatterns import format_suffix_patterns
 urlpatterns = [
-    path("", UserApiView.as_view())
+    path("", views.UserListView.as_view()),
+    path('login/', views.LoginView.as_view()),
+    path("logout/", views.LogoutView.as_view())
+
 ]
+
+urlpatterns = format_suffix_patterns(urlpatterns)
