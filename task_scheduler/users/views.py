@@ -28,6 +28,20 @@ class ListCreateUserView(APIView):
         return response(errors=serializer.errors)
 
 
+class RetrieveUpdateDestroyUserView(APIView):
+    def get(self, request):
+        ...
+        # todo
+
+    def put(self, request):
+        ...
+        #  todo
+
+    def delete(self, request):
+        ...
+        #  todo
+
+
 class LoginView(APIView):
 
     def post(self, request, format=None):
