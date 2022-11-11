@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 from rest_framework.urlpatterns import format_suffix_patterns
 urlpatterns = [
-    path("", views.UserListView.as_view()),
+    path("", views.ListCreateUserView.as_view()),
     path('login/', views.LoginView.as_view()),
     path("logout/", views.LogoutView.as_view())
 

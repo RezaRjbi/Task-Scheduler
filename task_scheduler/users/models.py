@@ -8,4 +8,4 @@ class User(AbstractUser):
     """
     extends the default django user model and add a phone field to it
     """
-    Phone = models.CharField(max_length=13, validators=[RegexValidator(regex=PHONE_REGEX)])
+    phone = models.CharField(max_length=13, validators=[RegexValidator(regex=PHONE_REGEX)])

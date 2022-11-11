@@ -1,46 +1,61 @@
 from rest_framework.views import APIView, status
-from rest_framework import generics
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
-from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authtoken.models import Token
 
 from django.contrib.auth import authenticate, login, logout
-
-from pydantic import ValidationError
 
 from .models import User
 from .serializers import UserSerializer, LoginSerializer
 
-from .permissions import IsUnAuthenticated
+from .permissions import IsAdminOrNewUser
+
+from utils.general import response
 
 
-class UserListView(generics.ListAPIView):
-    queryset = User.objects.all()
-    permission_classes = [IsAdminUser]
-    serializer_class = UserSerializer
+class ListCreateUserView(APIView):
+    permission_classes = [IsAdminOrNewUser]
+
+    def get(self, request):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return response(instance=serializer.data, total=users.count())
+
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return response(UserSerializer(user).data)
+        return response(errors=serializer.errors)
 
 
 class LoginView(APIView):
-    permission_classes = [IsUnAuthenticated]
 
     def post(self, request, format=None):
+
+        serializer = LoginSerializer(data=request.data)
+        if not serializer.is_valid():
+            return response(errors=serializer.errors)
+        data = serializer.data
         try:
-            data = LoginSerializer(**request.data)
-        except ValidationError as e:
-            return Response(dict(errors=e.errors()))
-        try:
-            User.objects.get(username=data.username)
+            User.objects.get(username=data["username"])
         except User.DoesNotExist:
-            return Response(dict(errors="user not found"), status=status.HTTP_404_NOT_FOUND)
-        user = authenticate(username=data.username, password=data.password)
+            return response(errors="user not found", status_code=status.HTTP_404_NOT_FOUND)
+        user = authenticate(username=data["username"], password=data["password"])
         if not user:
-            return Response(dict(errors="Wrong credentials"))
+            return response(errors="Wrong credentials")
         login(request, user)
-        return Response(dict(success=f"{user.username} successfully logged in"), status=status.HTTP_200_OK)
+        try:
+            token = Token.objects.get(user=user)
+        except Token.DoesNotExist:
+            token = Token.objects.create(user=user)
+        return response(
+            data=f"{user.username} logged in successfully",
+            status_code=status.HTTP_200_OK, token=token.key
+        )
 
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
         logout(request)
-        return Response(dict(success="Successfully logged out"))
+        return response(data="Successfully logged out")

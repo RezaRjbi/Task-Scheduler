@@ -1,10 +1,11 @@
 from rest_framework import permissions
-from rest_framework import request as Request
 
 
-class IsUnAuthenticated(permissions.BasePermission):
-
+class IsAdminOrNewUser(permissions.BasePermission):
+    """
+    allow admins to get a list of all users and allow everyone to register
+    """
     def has_permission(self, request, view):
-        if request.method == "POST":
-            return not request.user.is_authenticated
+        if request.method == "GET":
+            return bool(request.user and request.user.is_staff)
         return True
