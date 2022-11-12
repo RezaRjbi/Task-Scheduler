@@ -24,8 +24,8 @@ class ListCreateUserView(APIView):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            return response(UserSerializer(user).data)
-        return response(errors=serializer.errors)
+            return response(instance=user, to_dict=True, status_code=status.HTTP_201_CREATED)
+        return response(errors=serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
 
 
 class RetrieveUpdateDestroyUserView(APIView):
@@ -57,19 +57,19 @@ class LoginView(APIView):
         user = authenticate(username=data["username"], password=data["password"])
         if not user:
             return response(errors="Wrong credentials")
-        login(request, user)
-        try:
-            token = Token.objects.get(user=user)
-        except Token.DoesNotExist:
-            token = Token.objects.create(user=user)
+
+        token = Token.objects.get_or_create(user=user)
+        # except Token.DoesNotExist:
+        #     token = Token.objects.create(user=user)
         return response(
             data=f"{user.username} logged in successfully",
-            status_code=status.HTTP_200_OK, token=token.key
+            status_code=status.HTTP_200_OK, token=token[0].key
         )
 
 
 class LogoutView(APIView):
 
     def post(self, request, format=None):
-        logout(request)
+        request.user.auth_token.delete()
+
         return response(data="Successfully logged out")
