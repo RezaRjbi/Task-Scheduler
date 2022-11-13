@@ -17,14 +17,13 @@ class ListCreateUserView(APIView):
 
     def get(self, request):
         users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
-        return response(instance=serializer.data, total=users.count())
+        return response(instance=users, serializer=UserSerializer, many=True, total=users.count())
 
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            return response(instance=user, to_dict=True, status_code=status.HTTP_201_CREATED)
+            return response(instance=user, status_code=status.HTTP_201_CREATED, serializer=UserSerializer)
         return response(errors=serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
 
 
@@ -52,15 +51,16 @@ class LoginView(APIView):
         data = serializer.data
         try:
             User.objects.get(username=data["username"])
-        except User.DoesNotExist:
-            return response(errors="user not found", status_code=status.HTTP_404_NOT_FOUND)
+        except User.DoesNotExist as e:
+            return response(data="user not found", errors=str(e), status_code=status.HTTP_404_NOT_FOUND)
         user = authenticate(username=data["username"], password=data["password"])
         if not user:
-            return response(errors="Wrong credentials")
+            return response(
+                data="provided username and password dont match",
+                errors="wrong_credentials", status_code=status.HTTP_401_UNAUTHORIZED
+            )
 
         token = Token.objects.get_or_create(user=user)
-        # except Token.DoesNotExist:
-        #     token = Token.objects.create(user=user)
         return response(
             data=f"{user.username} logged in successfully",
             status_code=status.HTTP_200_OK, token=token[0].key
@@ -71,5 +71,4 @@ class LogoutView(APIView):
 
     def post(self, request, format=None):
         request.user.auth_token.delete()
-
-        return response(data="Successfully logged out")
+        return response(data="Successfully logged out", status_code=status.HTTP_200_OK)
