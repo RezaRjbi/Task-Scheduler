@@ -74,19 +74,9 @@ class LogoutView(APIView):
         return response(data="Successfully logged out", status_code=status.HTTP_200_OK)
 
 
-class PromoteToAdminView(APIView):
+class ChangeRoleView(APIView):
     """
-    a superuser can promote a normal user to a staff member
-    """
-
-    def post(self):
-        # todo
-        ...
-
-
-class DemoteUserView(APIView):
-    """
-    a superuser can demote a staff user to a normal user
+    a superuser can promote or a normal user to a staff member or turn a staff member to a normal one
     """
 
     def post(self):
