@@ -10,6 +10,9 @@ def generate_random_number(length):
 
 
 def response(instance=None, data=None, errors=None, status_code=None, serializer=None, many=False, **kwargs):
+    """
+    generate Response objects for API response
+    """
     if instance and not serializer:
         raise Exception("serializer for instance not provided")
     response_body = {

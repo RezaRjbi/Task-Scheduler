@@ -4,12 +4,39 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
+from users.models import User
+from users.serializers import UserSerializer
+
 
 class UserTestCase(TestCase):
+    client_class = APIClient
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_url = reverse("users")
+
+    def setUp(self):
+        self.sample_user = User.objects.create(username="testUser", password="password")
 
     def test_identical_username_registration(self):
-        client = APIClient()
-        url = reverse("users")
-        client.post(url, data={"username": "testUser", "password": "password"})
-        response = client.post(url, data={"username": "testUser", "password": "password2"})
+        response = self.client.post(self.user_url, data={"username": "testUser", "password": "password2"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_retrieve_user(self):
+        response = self.client.get(f"{self.user_url}/1/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        serializer = UserSerializer(self.sample_user)
+        self.assertEqual(response.json()["instances"], serializer.data)
+
+    def test_update_user(self):
+        response = self.client.put(f"{self.user_url}/1/", {"username": "updateTestUser", "email": "a@a.com"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        updated_user = UserSerializer(User.objects.get(1))
+        self.assertEqual(response.json()["instance"], updated_user.data)
+
+    def test_delete_user(self):
+        response = self.client.delete(f"{self.user_url}/1/")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertRaisesMessage(User.DoesNotExist, "The requested object does not exist", )
+        with self.assertRaisesMessage(User.DoesNotExist, "The requested object does not exist"):
+            User.objects.get(1)

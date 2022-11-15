@@ -7,11 +7,14 @@ from users.serializers import UserSerializer
 
 
 class UserManagementTestCase(TestCase):
+    client_class = APIClient
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_url = reverse("users")
 
     def test_user_register(self):
-        client = APIClient()
-        url = reverse("users")
-        response = client.post(url, data={"username": "testUser", "password": "password"})
+        response = self.client.post(self.user_url, data={"username": "testUser", "password": "password"})
         user = User.objects.get(username="testUser")
         serializer = UserSerializer(user)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
