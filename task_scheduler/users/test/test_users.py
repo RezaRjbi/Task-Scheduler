@@ -38,6 +38,5 @@ class UserTestCase(TestCase):
     def test_delete_user(self):
         response = self.client.delete(f"{self.user_url}1/")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertRaisesMessage(User.DoesNotExist, "The requested object does not exist", )
-        # with self.assertRaisesMessage(User.DoesNotExist, "User matching query does not exist."):
-        #     User.objects.get(1)
+        with self.assertRaisesMessage(User.DoesNotExist, "User matching query does not exist."):
+            User.objects.get(pk=1)
