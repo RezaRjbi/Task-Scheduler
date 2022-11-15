@@ -3,12 +3,16 @@ from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         exclude = ["user_permissions", "groups"]
         read_only_fields = ["last_login", "is_superuser", "is_staff", "is_active", "email", "phone", "date_joined"]
         extra_kwargs = {"password": {"write_only": True}}
+
+
+class UpdateUserSerializer(serializers.Serializer):
+    email = serializers.CharField(required=False)
+    phone = serializers.CharField(required=False)
 
 
 class LoginSerializer(serializers.Serializer):
