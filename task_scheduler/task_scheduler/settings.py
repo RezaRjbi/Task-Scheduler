@@ -119,6 +119,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # User Model
 AUTH_USER_MODEL = 'users.User'
 
+#Authentication backends
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+)
+
 # Regex
 PHONE_REGEX = r"^09\d{9}$"  # must start with 09 and have 9 more digits
 
