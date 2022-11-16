@@ -2,6 +2,11 @@ from rest_framework import serializers
 from .models import User
 
 
+class RegisterUserSerializer(serializers.Serializer):
+    username = serializers.CharField(source="User.username")
+    password = serializers.CharField(source="User.password")
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -13,6 +18,8 @@ class UserSerializer(serializers.ModelSerializer):
 class UpdateUserSerializer(serializers.Serializer):
     email = serializers.CharField(required=False)
     phone = serializers.CharField(required=False)
+    first_name = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
 
 
 class LoginSerializer(serializers.Serializer):
