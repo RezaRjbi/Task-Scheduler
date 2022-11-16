@@ -14,7 +14,18 @@ class IsAdminOrNewUser(permissions.BasePermission):
 
 class IsAdminOrOwner(permissions.BasePermission):
 
-    def has_object_permission(self, request, view, obj):
-        return bool(
-            request.user and (request.user.is_staff or request.user.id == obj.id)
-        )
+    def has_permission(self, request, view):
+        requested_id = int(request.path.split("/")[-2])
+        if request.method == "GET":
+            return bool(
+                request.user and (request.user.is_staff or request.user.id == requested_id)
+            )
+        if request.method == "PUT":
+            return bool(
+                request.user and request.user.id == requested_id
+            )
+        if request.method == "DELETE":
+            return bool(
+                request.user and request.user.is_staff
+            )
+
