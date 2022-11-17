@@ -32,3 +32,11 @@ class UserManagementTestCase(TestCase):
         serializer = UserSerializer(User.objects.all(), many=True)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["instances"], serializer.data)
+
+    def test_change_role(self):
+        # todo
+        ...
+
+    def test_change_active_status(self):
+        # todo
+        ...

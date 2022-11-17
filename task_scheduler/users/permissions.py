@@ -19,7 +19,6 @@ class IsSuperuser(permissions.BasePermission):
 
 
 class CustomPermissions:
-
     @classmethod
     def get_req_and_kwarg(cls, args: tuple, kwargs: dict, kw: str, convert_to_int: bool = True):
         """
@@ -54,6 +53,7 @@ class CustomPermissions:
 
     @classmethod
     def is_admin(cls, f):
+        # todo: make this decorator usable for views that has no "pk"
         def wrapper(*args, **kwargs):
             request, pk = cls.get_req_and_kwarg(args, kwargs, "pk")
 

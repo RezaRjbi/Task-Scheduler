@@ -68,3 +68,15 @@ class UserTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         with self.assertRaisesMessage(User.DoesNotExist, "User matching query does not exist."):
             User.objects.get(username=self.sample_user.username)
+
+    def test_login(self):
+        # todo
+        ...
+
+    def test_logout(self):
+        # todo
+        ...
+
+    def test_delete_account(self):
+        # todo
+        ...
