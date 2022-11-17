@@ -6,9 +6,9 @@ from django.shortcuts import get_object_or_404
 from django.db.utils import IntegrityError
 
 from .models import User
-from .serializers import UserSerializer, RegisterUserSerializer, LoginSerializer, UpdateUserSerializer
-
-from .permissions import IsAdminOrNewUser, IsAdminOrOwner
+from . import serializers as cs
+from .permissions import IsAdminOrNewUser, IsSuperuser
+from .permissions import CustomPermissions as Cp
 
 from utils.general import response
 from utils.db import update_instance
@@ -20,11 +20,11 @@ class ListCreateUserView(APIView):
     def get(self, request):
         users = User.objects.all()
         return response(
-            instance=users, serializer=UserSerializer, many=True, total=users.count(), status_code=status.HTTP_200_OK
+            instance=users, serializer=cs.UserSerializer, many=True, total=users.count(), status_code=status.HTTP_200_OK
         )
 
     def post(self, request):
-        serializer = RegisterUserSerializer(data=request.data)
+        serializer = cs.RegisterUserSerializer(data=request.data)
         if serializer.is_valid():
             try:
 
@@ -33,26 +33,28 @@ class ListCreateUserView(APIView):
                 return response(
                     status_code=status.HTTP_400_BAD_REQUEST, errors=str(e), detail="username already exists"
                 )
-            return response(instance=user, status_code=status.HTTP_201_CREATED, serializer=UserSerializer)
+            return response(instance=user, status_code=status.HTTP_201_CREATED, serializer=cs.UserSerializer)
         return response(errors=serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
 
 
 class RetrieveUpdateDestroyUserView(APIView):
-    permission_classes = [IsAdminOrOwner]
 
+    @Cp.is_admin_or_owner
     def get(self, request, pk: int):
         user = get_object_or_404(User, pk=pk)
-        return response(instance=user, serializer=UserSerializer, status_code=status.HTTP_200_OK)
+        return response(instance=user, serializer=cs.UserSerializer, status_code=status.HTTP_200_OK)
 
+    @Cp.is_owner
     def put(self, request, pk: int):
         user = get_object_or_404(User, pk=pk)
-        serializer = UpdateUserSerializer(data=request.data)
+        serializer = cs.UpdateUserSerializer(data=request.data)
         if serializer.is_valid():
             update_instance(user, serializer.data)
-            return response(status_code=status.HTTP_200_OK, instance=user, serializer=UserSerializer)
+            return response(status_code=status.HTTP_200_OK, instance=user, serializer=cs.UserSerializer)
 
         return response(errors=serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
 
+    @Cp.is_admin
     def delete(self, request, pk):
         user = get_object_or_404(User, pk=pk)
         user.delete()
@@ -63,12 +65,12 @@ class LoginView(APIView):
 
     def post(self, request, format=None):
 
-        serializer = LoginSerializer(data=request.data)
+        serializer = cs.LoginSerializer(data=request.data)
         if not serializer.is_valid():
             return response(errors=serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
         data = serializer.data
         try:
-            u = User.objects.get(username=data.get("username"))
+            User.objects.get(username=data.get("username"))
         except User.DoesNotExist as e:
             return response(detail="user not found", errors=str(e), status_code=status.HTTP_404_NOT_FOUND)
         user = authenticate(username=data.get("username"), password=data.get("password"))
@@ -95,19 +97,38 @@ class LogoutView(APIView):
 
 class ChangeRoleView(APIView):
     """
-    a superuser can promote or a normal user to a staff member or turn a staff member to a normal one
+    a superuser can promote a normal user to a staff member or turn a staff member to a normal user
+    """
+    permission_classes = [IsSuperuser]
+
+    def post(self, request, pk):
+        serializer = cs.ChangeRoleSerializer(data=request.data)
+        if serializer.is_valid():
+            user = get_object_or_404(User, pk=pk)
+            update_instance(user, serializer.data)
+            return response(status_code=status.HTTP_200_OK)
+        return response(status_code=status.HTTP_400_BAD_REQUEST, errors=serializer.errors)
+
+
+class ChangeActiveStatusView(APIView):
+    """
+    turn a user active status to de-active and vice-versa
     """
 
-    def post(self):
-        # todo
-        ...
+    @Cp.is_admin
+    def post(self, request, pk):
+        serializer = cs.ChangeActiveStatusSerializer(data=request.data)
+        if serializer.is_valid():
+            user = get_object_or_404(User, pk=pk)
+            update_instance(user, serializer.data)
+            return response(status_code=status.HTTP_200_OK)
+        return response(status_code=status.HTTP_400_BAD_REQUEST, errors=serializer.errors)
 
 
-class ChangeUserActivateStatusView(APIView):
-    """
-    turn a user active status to de-active and vice-versa. only staff members can perform this action
-    """
+class DeleteAccountView(APIView):
 
-    def post(self):
-        # todo
-        ...
+    @Cp.is_owner
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        update_instance(user, {"is_active": False})
+        return response(status_code=status.HTTP_200_OK, detail="Account successfully deleted")

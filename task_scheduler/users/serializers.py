@@ -25,3 +25,15 @@ class UpdateUserSerializer(serializers.Serializer):
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(source="User.username")
     password = serializers.CharField(source="User.password")
+
+
+class ChangeRoleSerializer(serializers.Serializer):
+    is_staff = serializers.ChoiceField([True, False])
+
+
+class ChangeActiveStatusSerializer(serializers.Serializer):
+    is_active = serializers.ChoiceField([True, False])
+
+
+class DeleteAccountSerializer(serializers.Serializer):
+    is_active = serializers.ChoiceField([True])
