@@ -7,8 +7,8 @@ from django.db.utils import IntegrityError
 
 from .models import User
 from . import serializers as cs
-from .permissions import IsAdminOrNewUser, IsSuperuser
-from .permissions import CustomPermissions as Cp
+from .permissions.permissions import IsAdminOrNewUser, IsSuperuser
+from .permissions.permissions import CustomPermissions as Cp
 
 from utils.general import response
 from utils.db import update_instance
@@ -126,9 +126,21 @@ class ChangeActiveStatusView(APIView):
 
 
 class DeleteAccountView(APIView):
+    """
+    only account owner them-self can use this views. mods can CahngeActiveStatusView to ban/unban users
+    """
 
     @Cp.is_owner
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
         update_instance(user, {"is_active": False})
         return response(status_code=status.HTTP_200_OK, detail="Account successfully deleted")
+
+
+class MeView(APIView):
+
+    @Cp.has_permission(['is_authenticated'])
+    def get(self, request):
+        return response(status_code=status.HTTP_200_OK, instance=request.user, serializer=cs.UserSerializer)
+
+# todo: use new permission decorator on views

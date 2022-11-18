@@ -3,6 +3,7 @@ from . import views
 from rest_framework.urlpatterns import format_suffix_patterns
 urlpatterns = [
     path("", views.ListCreateUserView.as_view(), name="users"),
+    path("me/", views.MeView.as_view(), name="ME"),
     path("<int:pk>/", views.RetrieveUpdateDestroyUserView.as_view(), name="user"),
     path("<int:pk>/change_role/", views.ChangeRoleView.as_view(), name="change_role"),
     path("<int:pk>/change_active_status/", views.ChangeActiveStatusView.as_view(), name="change_active"),
