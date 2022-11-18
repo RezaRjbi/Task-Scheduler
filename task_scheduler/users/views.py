@@ -7,16 +7,16 @@ from django.db.utils import IntegrityError
 
 from .models import User
 from . import serializers as cs
-from .permissions.permissions import IsAdminOrNewUser, IsSuperuser
-from .permissions.permissions import CustomPermissions as Cp
+from .permissions.permissions import has_permission
+from .permissions import filters
 
 from utils.general import response
 from utils.db import update_instance
 
 
 class ListCreateUserView(APIView):
-    permission_classes = [IsAdminOrNewUser]
 
+    @has_permission([filters.IS_STAFF])
     def get(self, request):
         users = User.objects.all()
         return response(
@@ -39,12 +39,12 @@ class ListCreateUserView(APIView):
 
 class RetrieveUpdateDestroyUserView(APIView):
 
-    @Cp.is_admin_or_owner
+    @has_permission([filters.IS_STAFF, filters.IS_OWNER], "pk", "User")
     def get(self, request, pk: int):
         user = get_object_or_404(User, pk=pk)
         return response(instance=user, serializer=cs.UserSerializer, status_code=status.HTTP_200_OK)
 
-    @Cp.is_owner
+    @has_permission([filters.IS_OWNER], "pk", "User")
     def put(self, request, pk: int):
         user = get_object_or_404(User, pk=pk)
         serializer = cs.UpdateUserSerializer(data=request.data)
@@ -54,7 +54,7 @@ class RetrieveUpdateDestroyUserView(APIView):
 
         return response(errors=serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
 
-    @Cp.is_admin
+    @has_permission([filters.IS_STAFF])
     def delete(self, request, pk):
         user = get_object_or_404(User, pk=pk)
         user.delete()
@@ -99,8 +99,7 @@ class ChangeRoleView(APIView):
     """
     a superuser can promote a normal user to a staff member or turn a staff member to a normal user
     """
-    permission_classes = [IsSuperuser]
-
+    @has_permission([filters.IS_SUPERUSER])
     def post(self, request, pk):
         serializer = cs.ChangeRoleSerializer(data=request.data)
         if serializer.is_valid():
@@ -115,7 +114,7 @@ class ChangeActiveStatusView(APIView):
     turn a user active status to de-active and vice-versa
     """
 
-    @Cp.is_admin
+    @has_permission([filters.IS_STAFF])
     def post(self, request, pk):
         serializer = cs.ChangeActiveStatusSerializer(data=request.data)
         if serializer.is_valid():
@@ -130,7 +129,7 @@ class DeleteAccountView(APIView):
     only account owner them-self can use this views. mods can CahngeActiveStatusView to ban/unban users
     """
 
-    @Cp.is_owner
+    @has_permission([filters.IS_OWNER], kw="pk", model_filed="User")
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
         update_instance(user, {"is_active": False})
@@ -139,8 +138,7 @@ class DeleteAccountView(APIView):
 
 class MeView(APIView):
 
-    @Cp.has_permission(['is_authenticated'])
+    @has_permission([filters.IS_AUTHENTICATED])
     def get(self, request):
         return response(status_code=status.HTTP_200_OK, instance=request.user, serializer=cs.UserSerializer)
 
-# todo: use new permission decorator on views

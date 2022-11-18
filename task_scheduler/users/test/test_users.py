@@ -50,7 +50,7 @@ class UserTestCase(TestCase):
 
     def test_retrieve_user_by_others(self):
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.sample_user_token)
-        response = self.client.get(f"{self.user_url}3/")
+        response = self.client.get(f"{self.user_url}{self.admin_user.id}/")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_update_user(self):
