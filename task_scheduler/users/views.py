@@ -1,7 +1,7 @@
 from rest_framework.views import APIView, status
 from rest_framework.authtoken.models import Token
 
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.shortcuts import get_object_or_404
 from django.db.utils import IntegrityError
 
@@ -10,7 +10,7 @@ from . import serializers as cs
 from .permissions.permissions import has_permission
 from .permissions import filters
 
-from utils.general import response
+from utils.general import response, unauthorized
 from utils.db import update_instance
 
 
@@ -19,6 +19,8 @@ class ListCreateUserView(APIView):
     @has_permission([filters.IS_STAFF])
     def get(self, request):
         users = User.objects.all()
+        if request.query_params.get(filters.IS_ACTIVE):
+            users = users.filter(is_active=True)
         return response(
             instance=users, serializer=cs.UserSerializer, many=True, total=users.count(), status_code=status.HTTP_200_OK
         )
@@ -27,7 +29,6 @@ class ListCreateUserView(APIView):
         serializer = cs.RegisterUserSerializer(data=request.data)
         if serializer.is_valid():
             try:
-
                 user = User.objects.create_user(**serializer.data)
             except IntegrityError as e:
                 return response(
@@ -69,12 +70,13 @@ class LoginView(APIView):
         if not serializer.is_valid():
             return response(errors=serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
         data = serializer.data
-        try:
-            User.objects.get(username=data.get("username"))
-        except User.DoesNotExist as e:
-            return response(detail="user not found", errors=str(e), status_code=status.HTTP_404_NOT_FOUND)
-        user = authenticate(username=data.get("username"), password=data.get("password"))
-        if not user:
+
+        user = get_object_or_404(User, username=data.get("username"))
+        if not user.is_active:
+
+            return unauthorized()
+
+        if not user.check_password(data.get("password")):
             return response(
                 detail="provided username and password dont match",
                 errors="wrong_credentials", status_code=status.HTTP_401_UNAUTHORIZED

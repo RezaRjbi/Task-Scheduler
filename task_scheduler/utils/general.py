@@ -1,6 +1,7 @@
 import string
 import random
 
+from rest_framework import status
 from rest_framework.response import Response
 
 
@@ -24,3 +25,7 @@ def response(status_code, instance=None, detail=None, errors=None, serializer=No
         response_body["errors"] = errors
     response_body.update(**kwargs)
     return Response(data=response_body, status=status_code)
+
+
+def unauthorized():
+    return Response(data={"detail": "User inactive or deleted"}, status=status.HTTP_401_UNAUTHORIZED)
