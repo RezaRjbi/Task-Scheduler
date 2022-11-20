@@ -98,3 +98,15 @@ class UserTestCase(TestCase):
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_delete_account_by_others(self):
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.admin_user_token)
+        url = reverse("delete_account", kwargs={"pk": self.sample_user.id})
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_Me_view(self):
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.sample_user_token)
+        response = self.client.get(self.user_url + "me/")
+        serializer = UserSerializer(self.sample_user)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["instances"], serializer.data)
