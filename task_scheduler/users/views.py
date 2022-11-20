@@ -102,7 +102,7 @@ class ChangeRoleView(APIView):
     a superuser can promote a normal user to a staff member or turn a staff member to a normal user
     """
     @has_permission([filters.IS_SUPERUSER])
-    def post(self, request, pk):
+    def put(self, request, pk):
         serializer = cs.ChangeRoleSerializer(data=request.data)
         if serializer.is_valid():
             user = get_object_or_404(User, pk=pk)
@@ -117,7 +117,7 @@ class ChangeActiveStatusView(APIView):
     """
 
     @has_permission([filters.IS_STAFF])
-    def post(self, request, pk):
+    def put(self, request, pk):
         serializer = cs.ChangeActiveStatusSerializer(data=request.data)
         if serializer.is_valid():
             user = get_object_or_404(User, pk=pk)

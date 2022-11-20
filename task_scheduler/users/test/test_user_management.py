@@ -33,10 +33,27 @@ class UserManagementTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["instances"], serializer.data)
 
-    def test_change_role(self):
-        # todo
-        ...
+    def test_change_role_by_superuser(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.superuser_token)
+        user = User.objects.create_user(username="changeRole", password="password")
+        url = reverse("change_role", kwargs={"pk": user.id})
+        response = self.client.put(url, {"is_staff": True})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user.refresh_from_db()
+        self.assertEqual(user.is_staff, True)
 
-    def test_change_active_status(self):
-        # todo
-        ...
+    def test_change_role_by_admin(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.admin_user_token)
+        user = User.objects.create_user(username="changeRole", password="password")
+        url = reverse("change_role", kwargs={"pk": user.id})
+        response = self.client.put(url, {"is_staff": True})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_change_active_status_by_admin(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.admin_user_token)
+        user = User.objects.create_user(username="changeRole", password="password")
+        url = reverse("change_active", kwargs={"pk": user.id})
+        response = self.client.put(url, {"is_active": False})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user.refresh_from_db()
+        self.assertEqual(user.is_active, False)
