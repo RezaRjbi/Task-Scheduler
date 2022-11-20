@@ -7,9 +7,9 @@ from users.models import User
 
 class Task(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    task_id = models.IntegerField(validators=[MaxValueValidator(99999999)], unique=True)
+    task_id = models.IntegerField(validators=[MaxValueValidator(99999999)], unique=True, editable=False)
     title = models.CharField(max_length=255)
-    description = models.TextField()
+    description = models.TextField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
     deadline = models.DateTimeField(null=True, blank=True)
     completed = models.BooleanField(default=False)

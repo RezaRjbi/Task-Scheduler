@@ -1,3 +1,27 @@
-from django.shortcuts import render
+from rest_framework.views import APIView
 
-# Create your views here.
+
+class ListCreateTaskView(APIView):
+
+    def get(self):
+        pass
+        # todo
+
+    def post(self):
+        pass
+        # todo
+
+
+class RetrieveUpdateDestroyTaskView(APIView):
+
+    def get(self):
+        pass
+        # todo
+
+    def post(self):
+        pass
+        # todo
+
+    def delete(self):
+        pass
+        # todo
