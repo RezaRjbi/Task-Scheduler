@@ -92,8 +92,8 @@ class LoginView(APIView):
 class LogoutView(APIView):
 
     def post(self, request, format=None):
-        logout(request)
         request.user.auth_token.delete()
+        logout(request)
         return response(detail="Successfully logged out", status_code=status.HTTP_200_OK)
 
 
