@@ -33,7 +33,7 @@ class UserTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_retrieve_user_by_admin(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.admin_user_token)
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.admin_user_token)
         id = self.sample_user.id
         response = self.client.get(f"{self.user_url}{id}/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -41,7 +41,7 @@ class UserTestCase(TestCase):
         self.assertEqual(response.json()["instances"], serializer.data)
 
     def test_retrieve_user_by_owner(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.sample_user_token)
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.sample_user_token)
         id = self.sample_user.id
         response = self.client.get(f"{self.user_url}{id}/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -49,12 +49,12 @@ class UserTestCase(TestCase):
         self.assertEqual(response.json()["instances"], serializer.data)
 
     def test_retrieve_user_by_others(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.sample_user_token)
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.sample_user_token)
         response = self.client.get(f"{self.user_url}{self.admin_user.id}/")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_update_user(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.sample_user_token)
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.sample_user_token)
         id = self.sample_user.id
         response = self.client.put(f"{self.user_url}{id}/", {"first_name": "firstname", "email": "a@aiij.com"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -62,7 +62,7 @@ class UserTestCase(TestCase):
         self.assertEqual(response.json()["instances"], updated_user.data)
 
     def test_delete_user(self):
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.admin_user_token)
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.admin_user_token)
         id = self.sample_user.id
         response = self.client.delete(f"{self.user_url}{id}/")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -70,13 +70,31 @@ class UserTestCase(TestCase):
             User.objects.get(username=self.sample_user.username)
 
     def test_login(self):
-        # todo
-        ...
+        response = self.client.post(
+            self.user_url + "login/", {"username": self.sample_user.username, "password": "password"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("token", response.json())
+
+    def test_register_and_login(self):
+        username = "newUserRegistration"
+        password = "password"
+        response = self.client.post(self.user_url, {"username": username, "password": password})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        login_response = self.client.post(
+            self.user_url + "login/", {"username": username, "password": password}
+        )
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+        self.assertIn("token", login_response.json())
 
     def test_logout(self):
-        # todo
-        ...
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.sample_user_token)
+        response = self.client.post(self.user_url + "logout/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_delete_account(self):
-        # todo
-        ...
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.sample_user_token)
+        url = reverse("delete_account", kwargs={"pk": self.sample_user.id})
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
